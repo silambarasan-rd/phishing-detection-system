@@ -64,7 +64,7 @@ export default function App() {
                 <h3 className="text-sm font-medium text-gray-700 mb-2">External API Checks</h3>
                 <div className="text-sm text-gray-600">
                   <div><strong>Google Safe Browsing:</strong> {result.apiVerdict?.googleSafeBrowsing === true ? "⚠️ Malicious" : (result.apiVerdict?.googleSafeBrowsing === false ? "✅ Clean" : "N/A")}</div>
-                  <div><strong>PhishTank:</strong> {result.apiVerdict?.phishTank === true ? "⚠️ Phishing" : (result.apiVerdict?.phishTank === false ? "✅ Not in DB" : "N/A")}</div>
+                  <div><strong>URLhaus:</strong> {result.apiVerdict?.urlhaus === true ? "⚠️ Malicious" : (result.apiVerdict?.urlhaus === false ? "✅ Clean" : "N/A")}</div>
                 </div>
               </div>
 

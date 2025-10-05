@@ -1,13 +1,13 @@
 Phishing Detection System (Bargavi)
 
-Backend: Node.js + Express (TypeScript) with Google Safe Browsing & PhishTank integration.
+Backend: Node.js + Express (TypeScript) with Google Safe Browsing & URLhaus integration.
 Frontend: React + Vite + TailwindCSS (TypeScript).
 
 Setup:
   1. Backend:
      cd backend
      npm install
-     copy .env.example to .env and set GOOGLE_SAFE_BROWSING_KEY and optionally PHISHTANK_API_KEY
+     copy .env.example to .env and set GOOGLE_SAFE_BROWSING_KEY
      npm run start
 
   2. Frontend:
