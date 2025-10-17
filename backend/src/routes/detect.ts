@@ -48,6 +48,7 @@ async function checkURLhaus(url: string) {
     const res = await fetch(`https://urlhaus-api.abuse.ch/v1/url/`, {
       method: 'POST',
       headers: {
+        'Auth-Key': 'f9aae3d6b9889371af83ec7c5d5a75a6b41afcc1d35f294f',
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
