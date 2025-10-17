@@ -2,8 +2,9 @@
   "name": "phishing-backend",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "NODE_OPTIONS='--loader ts-node/esm' ts-node src/index.ts",
     "build": "tsc"
   },
   "dependencies": {
