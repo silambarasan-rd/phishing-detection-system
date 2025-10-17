@@ -42,13 +42,13 @@ async function checkGoogleSafeBrowsing(url: string, apiKey: string) {
   }
 }
 
-async function checkURLhaus(url: string) {
+async function checkURLhaus(url: string, authKey: string) {
   try {
     // Using URLhaus's URL lookup endpoint
     const res = await fetch(`https://urlhaus-api.abuse.ch/v1/url/`, {
       method: 'POST',
       headers: {
-        'Auth-Key': 'f9aae3d6b9889371af83ec7c5d5a75a6b41afcc1d35f294f',
+        'Auth-Key': authKey,
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
@@ -181,11 +181,13 @@ router.post("/detect", async (req, res) => {
 
   // 1. External API checks
   const gsKey = process.env.GOOGLE_SAFE_BROWSING_KEY || '';
+  const urlHausAuthKey = process.env.URLHAUS_AUTH_KEY || '';
+
   let googleFlag = null;
   try { googleFlag = await checkGoogleSafeBrowsing(normalized, gsKey); } catch (e) { console.error('Safe Browsing check failed', e); }
 
   let urlhausFlag = null;
-  try { urlhausFlag = await checkURLhaus(normalized); } catch (e) { console.error('URLhaus check failed', e); }
+  try { urlhausFlag = await checkURLhaus(normalized, urlHausAuthKey); } catch (e) { console.error('URLhaus check failed', e); }
 
   // If flagged by external API -> high-confidence phishing verdict
   if (googleFlag === true || urlhausFlag === true) {
