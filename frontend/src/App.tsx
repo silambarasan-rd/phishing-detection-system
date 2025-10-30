@@ -54,8 +54,13 @@ export default function App() {
                 <h2 className="text-lg font-semibold">{result.finalVerdict}</h2>
                 <p className="text-sm text-gray-500">{result.url}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right space-y-2">
                 <div className="inline-block px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700">Score: {result.score}</div>
+                <div className="block">
+                  <span className="inline-block px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700">
+                    Previous Queries: {result.previousQueries}
+                  </span>
+                </div>
               </div>
             </div>
 

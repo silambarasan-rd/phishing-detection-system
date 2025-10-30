@@ -82,6 +82,10 @@ This application helps users identify potentially malicious URLs by:
      GOOGLE_SAFE_BROWSING_KEY=your_api_key_here
      URLHAUS_AUTH_KEY=your_auth_key_here
      PORT=4000
+     
+     # Supabase configuration for URL tracking
+     SUPABASE_URL=your_supabase_project_url
+     SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
 
 4. Start the server:

@@ -3,6 +3,9 @@ import whois from "whois-json";
 import dns from "dns/promises";
 import fetch from "node-fetch";
 import { GoogleSafeBrowsingResponse, WhoisResponse } from "../types/api";
+import { extractUserDetails } from "../utils/userDetails";
+import { supabase } from "../config/supabase";
+import { UrlScanInsert } from "../types/database";
 
 const router = express.Router();
 
@@ -179,6 +182,9 @@ router.post("/detect", async (req, res) => {
 
   const normalized = url.trim().startsWith('http') ? url.trim() : 'http://' + url.trim();
 
+  // Extract user details
+  const userDetails = extractUserDetails(req);
+
   // 1. External API checks
   const gsKey = process.env.GOOGLE_SAFE_BROWSING_KEY || '';
   const urlHausAuthKey = process.env.URLHAUS_AUTH_KEY || '';
@@ -191,7 +197,7 @@ router.post("/detect", async (req, res) => {
 
   // If flagged by external API -> high-confidence phishing verdict
   if (googleFlag === true || urlhausFlag === true) {
-    return res.json({
+    const scanResults = {
       url: normalized,
       apiVerdict: { googleSafeBrowsing: googleFlag, urlhaus: urlhausFlag },
       rules: {},
@@ -199,7 +205,25 @@ router.post("/detect", async (req, res) => {
       whois: {},
       dns: {},
       finalVerdict: "Phishing 🚨 (detected by external API)"
+    };
+
+    // Store scan results
+    await storeScanResults({
+      url: normalized,
+      ip_address: userDetails.ipAddress,
+      browser: userDetails.browser,
+      location: userDetails.location,
+      is_phishing: true,
+      scan_results: {
+        google_safe_browsing: googleFlag,
+        urlhaus: urlhausFlag,
+        whois_suspicious: null,
+        dns_suspicious: null,
+        pattern_suspicious: null
+      }
     });
+
+    return res.json(scanResults);
   }
 
   // Otherwise, fallback to local heuristics + enrichment
@@ -249,8 +273,12 @@ router.post("/detect", async (req, res) => {
   } catch(e) { console.error('whois/dns enrichment failed', e); }
 
   const finalVerdict = ruleResult.score >= 3 ? 'Suspicious 🚨' : 'Likely Safe ✅';
+  const isPhishing = ruleResult.score >= 3;
 
-  res.json({
+  // Get the current query count before adding the new entry
+  const previousQueries = await getUrlQueryCount(normalized);
+
+  const scanResults = {
     url: normalized,
     apiVerdict: { googleSafeBrowsing: googleFlag, urlhaus: urlhausFlag },
     rules: ruleResult.reasons,
@@ -261,8 +289,60 @@ router.post("/detect", async (req, res) => {
       isNewDomain
     },
     dns: dnsData,
-    finalVerdict
+    finalVerdict,
+    previousQueries
+  };
+
+  // Store scan results
+  await storeScanResults({
+    url: normalized,
+    ip_address: userDetails.ipAddress,
+    browser: userDetails.browser,
+    location: userDetails.location,
+    is_phishing: isPhishing,
+    scan_results: {
+      google_safe_browsing: googleFlag,
+      urlhaus: urlhausFlag,
+      whois_suspicious: isNewDomain,
+      dns_suspicious: !dnsData?.hasRecords,
+      pattern_suspicious: ruleResult.score >= 3
+    }
   });
+
+  res.json(scanResults);
 });
+
+async function getUrlQueryCount(url: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('url_scans')
+      .select('*', { count: 'exact', head: true })
+      .eq('url', url);
+    
+    if (error) {
+      console.error('Error getting URL count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (e) {
+    console.error('Failed to get URL count:', e);
+    return 0;
+  }
+}
+
+async function storeScanResults(scan: UrlScanInsert) {
+  try {
+    const { error } = await supabase
+      .from('url_scans')
+      .insert([scan]);
+    
+    if (error) {
+      console.error('Error storing scan results:', error);
+    }
+  } catch (e) {
+    console.error('Failed to store scan results:', e);
+  }
+}
 
 export default router;
